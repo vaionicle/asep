@@ -17,6 +17,9 @@ services:
       - backend
 
 
+  # Server:
+  # Username: local
+  # Password: local
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: pma

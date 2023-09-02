@@ -7,7 +7,6 @@ DOCKER_RUN := docker run -it --rm \
 	-w "/opt/asep" \
 	${IMAGE_NAME}
 
-MYSQL_RUN := docker-compose -f ./docker-compose.yml
 
 build:
 	@echo "build"
@@ -20,18 +19,12 @@ ssh:
 
 run:
 	${DOCKER_RUN} python /opt/asep/src/import.py
-
-extract:
-	@echo "extract"
-
-
-import:
-	@echo "Import"
+run.db: db.run
 
 phpmyadmin:
 	open http://localhost:8081
 
-
+MYSQL_RUN := docker-compose -f ./docker-compose.yml
 db.run:
 	${MYSQL_RUN} up -d
 db.logs:
@@ -46,6 +39,5 @@ db.cleanup:
 db.dump:
 	${SQLITE_RUN} sh -c "sqlite3 /db/database.db .dump > /db/dump.sql"
 	${SQLITE_RUN} sh -c "sqlite3 /db/database.db .schema > /db/schema.sql"
-
 db.restore:
 	${SQLITE_RUN} sh -c "sqlite3 /db/database.db < /db/dump.sql"

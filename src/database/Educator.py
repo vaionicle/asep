@@ -7,13 +7,12 @@ class Educator(Base):
     __tablename__ = "educator"
 
     # Every SQLAlchemy table should have a primary key named 'id'
-    id = Column(Integer, primary_key=True)
-
-    am = Column(String(length=255))
-    name = Column(String(length=255))
-    lastname = Column(String(length=255))
-    father = Column(String(length=255))
-    adt = Column(String(length=255))
+    id          = Column(Integer, primary_key=True)
+    am          = Column(String(length=255))
+    name        = Column(String(length=255))
+    lastname    = Column(String(length=255))
+    father      = Column(String(length=255))
+    adt         = Column(String(length=255))
 
     def createRow(row):
         return Educator(
@@ -23,6 +22,12 @@ class Educator(Base):
             father      = row['father'],
             adt         = row['adt'],
         )
+        
+    def updateRow(self, row):
+        self.name        = row['name'],
+        self.lastname    = row['lastname'],
+        self.father      = row['father'],
+        self.adt         = row['adt'],
 
     def __repr__(self) -> str:
         return f"Educator(\

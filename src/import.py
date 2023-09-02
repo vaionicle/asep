@@ -2,7 +2,7 @@
 
 import xlrd
 import json
-import tables2023
+import parsers.tables2023 as tables2023
 import database as mydb
 from database.Educator import Educator
 from database.Qualifications import Qualifications
@@ -25,52 +25,56 @@ if __name__ == "__main__":
     print("{0} {1} {2}".format(sh.name, sh.nrows, sh.ncols))
 
     init_row = 6
-    end_row = 28
+    end_row = 1000
     # end_row = sh.nrows-28
 
     for rx in range(init_row, end_row):
         row = sh.row(rx)
 
-        ekpedeutikos = tables2023.ekpedeutikos(row, fileName)
-        qualifications = tables2023.qualifications(row, fileName)
-        output = {
-            "ekpedeutikos": ekpedeutikos,
-            "qualifications": qualifications
-        }
-
+        row_ekpedeutikos = tables2023.ekpedeutikos(row)
+        row_qualifications = tables2023.qualifications(row, fileName)
+        
+        am =  row_ekpedeutikos['am']
         if debug:
+            parsed_row = {"ekpedeutikos": row_ekpedeutikos, "qualifications": row_qualifications}
+
             print(row)
-            print(output)
-            print(type(output))
-            print(json.dumps(output, sort_keys=True, ensure_ascii=False, indent=4))
+            print(parsed_row)
+            print(type(parsed_row))
+            print(json.dumps(parsed_row, sort_keys=True, ensure_ascii=False, indent=4))
 
-        educator = Educator.createRow(ekpedeutikos)
-        qualifications = Qualifications.createRow(qualifications)
+        print(f"{rx:<5} AM {am:<8}", end="")
 
-        # educatorSQL = select(Educator).where(Educator.am == ekpedeutikos['am'])
+        try:
+            select_educator = select(Educator).where(Educator.am == am)    
+            educators = mydb.connect.session.scalars(select_educator).all()
 
-        # session.execute(select(User.name, User.fullname)).first()
+            if len(educators) == 0:
+                raise Exception("NOT FOUND")
+            else:
+                print(f"EDUCATOR FOUND", end=" | ")
+        except Exception as e:
+            print(f"EDUCATOR NOT FOUND - {e}", end=" | ")
+            educator = Educator.createRow(row_ekpedeutikos)
+            mydb.connect.session.add(educator)
 
-        # exists = mydb.connect.session.query(Educator).filter_by(am = ekpedeutikos['am'])
-        
-        Educator.select().where(Educator.columns.am == ekpedeutikos['am'])
-        
-# query = Student.select().where(Student.columns.Major == 'English')
-# output = conn.execute(query)
-# print(output.fetchall())
+        try:
+            select_qualification = select(Qualifications) \
+                .where(Qualifications.am == am) \
+                .where(Qualifications.year_of_import == "2023")
+            qualifications = mydb.connect.session.scalars(select_qualification).all()
+
+            if len(qualifications) == 0:
+                raise Exception()
+            else:
+                qualifications[0].updateRow(row_qualifications)
+                print(f"QUALIFICATION FOUND", end=" | ")
+        except Exception as e:
+            print(f"QUALIFICATION NOT FOUND - {e}", end=" | ")
+            qualification = Qualifications.createRow(row_qualifications, "2023")
+            mydb.connect.session.add(qualification)
+
+        print(f"")
+        mydb.connect.session.commit()
 
 
-        print(exists)
-        # print(type(exists))
-        # if exists is None:
-        #     mydb.connect.session.add(educator)
-
-
-        # exists = mydb.connect.session.query(Qualifications).filter_by(
-        #     am = ekpedeutikos['am'],
-        #     file = fileName
-        # )
-        # if exists is None:
-        #     mydb.connect.session.add(qualifications)
-
-    mydb.connect.session.commit()

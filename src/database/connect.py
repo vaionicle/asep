@@ -7,7 +7,8 @@ SQLALCHEMY_DATABASE_URL = f"mariadb+mariadbconnector://{MYSQL_USER}:{MYSQL_PASS}
 
 print("Database URL is ",SQLALCHEMY_DATABASE_URL)
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 session = Session()
