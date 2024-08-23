@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from config import MYSQL_DB, MYSQL_IP, MYSQL_PORT, MYSQL_PASS, MYSQL_USER
+from src import config
 
-SQLALCHEMY_DATABASE_URL = f"mariadb+mariadbconnector://{MYSQL_USER}:{MYSQL_PASS}@{MYSQL_IP}:{MYSQL_PORT}/{MYSQL_DB}"
+SQLALCHEMY_DATABASE_URL = f"mariadb+mariadbconnector://{config.MYSQL_USER}:{config.MYSQL_PASS}@{config.MYSQL_IP}:{config.MYSQL_PORT}/{config.MYSQL_DB}"
 
-print("Database URL is ",SQLALCHEMY_DATABASE_URL)
+# print("Database URL is ",SQLALCHEMY_DATABASE_URL)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 # engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
