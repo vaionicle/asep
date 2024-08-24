@@ -1,10 +1,8 @@
 
 from sqlalchemy import String, Column, Integer, ForeignKey, Float, select
 
-import src.database as mydb
-
 from .Base import Base
-from .connect import engine
+from .connect import engine, session
 
 class Qualifications(Base):
     __tablename__ = "qualifications"
@@ -58,7 +56,7 @@ class Qualifications(Base):
             .where(Qualifications.am == am) \
             .where(Qualifications.year_of_import == year) \
             .where(Qualifications.spec == spec)
-        qualifications = mydb.connect.session.scalars(select_qualification).all()
+        qualifications = session.scalars(select_qualification).all()
 
         return qualifications
 

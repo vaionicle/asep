@@ -1,21 +1,24 @@
 from sqlalchemy import String, Column, Integer, ForeignKey, select, Boolean
 from sqlalchemy.orm import aliased
 
-import src.database as mydb
 from .Base import Base
-from .connect import engine
+from .connect import engine, session
 from .Qualifications import Qualifications
+
+import logging
+logger = logging.getLogger('qualifications')
+
 
 class Educator(Base):
     __tablename__ = "educator"
 
     # Every SQLAlchemy table should have a primary key named 'id'
     id              = Column(Integer, primary_key=True)
-    am              = Column(String(length=255))
+    am              = Column(String(length=255), index=True)
     name            = Column(String(length=255))
     lastname        = Column(String(length=255))
     father          = Column(String(length=255))
-    adt             = Column(String(length=255))
+    adt             = Column(String(length=255), index=True)
     penalty         = Column(Boolean, default=False)
     hired           = Column(Boolean, default=False)
 
@@ -73,7 +76,7 @@ class Educator(Base):
             select_educator = select_educator \
                 .where(Educator.father.like(f"{father[0:3]}%"))
 
-        educators = mydb.connect.session.scalars(select_educator).all()
+        educators = session.scalars(select_educator).all()
 
         return educators
 
@@ -122,16 +125,15 @@ class Educator(Base):
         select_join = select_join.join_from(educator_cls, qualifications_cls, educator_cls.am == qualifications_cls.am)
         select_join = select_join.where(qualifications_cls.spec.like(f"{spec}%"))
 
-        # print(select_join)
-        print(select_join.compile(engine, compile_kwargs={"literal_binds": True}))
+        logger.debug(select_join.compile(engine, compile_kwargs={"literal_binds": True}))
 
-        educators = mydb.connect.session.scalars(select_join).all()
+        educators = session.scalars(select_join).all()
 
         return educators
 
     def findByAm(am):
         select_educator = select(Educator).where(Educator.am == am)
-        educators = mydb.connect.session.scalars(select_educator).all()
+        educators = session.scalars(select_educator).all()
 
         return educators
 

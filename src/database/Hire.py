@@ -1,8 +1,8 @@
 
-from sqlalchemy import String, Column, Integer, ForeignKey, Float
+from sqlalchemy import String, Column, Integer, ForeignKey, Float, select
 
 from .Base import Base
-from .connect import engine
+from .connect import engine, session
 
 class Hire(Base):
     __tablename__ = "school_hire"
@@ -13,7 +13,7 @@ class Hire(Base):
     file                = Column(String(length=255))
 
     school_year         = Column(String(length=255))
-    round               = Column(Integer)
+    round               = Column(String(length=255))
 
     location            = Column(String(length=255))
     state               = Column(String(length=255))
@@ -31,29 +31,44 @@ class Hire(Base):
     main_table_type     = Column(String(length=255))
     main_table          = Column(String(length=255))
 
-    def createRow(self, row):
-        pass
+    def createRow(row, am, file):
+        hire = Hire()
+        hire.updateRow(row, am, file)
 
-    # def updateRow(self, row):
+        return hire
 
-        # school_year         =
-        # round               =
+    def updateRow(self, row, am, file):
+        self.am                  = am
+        self.file                = file
 
-        # location            =
-        # state               =
-        # management_sector   =
-        # working_hours       =
+        self.school_year         = row['school_year']
+        self.round               = row['round']
 
-        # aa                  =
-        # aa_row              =
+        self.location            = row['location']
+        self.state               = row['state']
+        self.management_sector   = row['management_sector']
+        self.working_hours       = row['working_hours']
 
-        # department          =
-        # specification       =
+        self.aa                  = row['a/a']
+        self.aa_row              = row['a/a_row']
 
-        # main_table_score    =
-        # main_table_order    =
-        # main_table_type     =
-        # main_table          =
+        self.department          = row['department']
+        self.specification       = row['spec']
 
+        self.main_table          = row['main_table']
+        self.main_table_score    = row['main_table_score']
+        self.main_table_order    = row['main_table_order']
+        self.main_table_type     = row['main_table_type']
+
+    def findByAmYearRoundAndSpec(am, year, round, spec):
+        select_hire = select(Hire) \
+            .where(Hire.am == am) \
+            .where(Hire.school_year == year) \
+            .where(Hire.round == round) \
+            .where(Hire.specification == spec)
+
+        hires = session.scalars(select_hire).all()
+
+        return hires
 
 Base.metadata.create_all(engine)
