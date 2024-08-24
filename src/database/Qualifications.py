@@ -10,9 +10,9 @@ class Qualifications(Base):
     # Every SQLAlchemy table should have a primary key named 'id'
     id                      = Column(Integer, primary_key=True)
 
-    am                      = Column(String(length=255))
-    year_of_import          = Column(String(length=255))
-    spec                    = Column(String(length=255))
+    am                      = Column(String(length=255), index=True)
+    year_of_import          = Column(String(length=255), index=True)
+    spec                    = Column(String(length=255), index=True)
 
     total_score             = Column(Float)
     total_score_of_academic = Column(Float)
