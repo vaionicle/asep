@@ -53,6 +53,7 @@ if __name__ == "__main__":
 
             # logger.debug(row_ekpedeutikos)
 
+            aa = row_qualifications['aa']
             am = row_qualifications['am']
             adt = row_ekpedeutikos['adt']
             
@@ -60,7 +61,7 @@ if __name__ == "__main__":
             name = " ".join(row_ekpedeutikos['name'])
             father = " ".join(row_ekpedeutikos['father'])
 
-            msg.append(f"{spec:<5} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
+            msg.append(f"{spec:<5} {aa:<6} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
 
             try:
                 action = ""
@@ -98,7 +99,7 @@ if __name__ == "__main__":
                 logger.info(educatorList)
                 logger.error(e)
 
-            msg.append(f"EDU: {action:<15}")
+            msg.append(f"EDU: {action:<11}")
 
             try:
                 action = ""

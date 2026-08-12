@@ -26,6 +26,7 @@ def qualifications(row, fileName, spec):
         am = 0
 
     return {
+        "aa": parse_int(row[0].value), 
         "am": am,
         "file": fileName,
         "year_of_import": 2026,

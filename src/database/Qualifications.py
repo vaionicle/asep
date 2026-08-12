@@ -9,9 +9,9 @@ class Qualifications(Base):
     
     __table_args__ = (
         Index(
-            "ix_hires_am_order_in_list",
+            "ix_qualifications_am_aa",
             "am",
-            "order_in_list"
+            "aa"
         ),
     )
 
@@ -26,7 +26,7 @@ class Qualifications(Base):
     # Metadata
     # --------------------------------------------------
 
-    order_in_list      = Column(Integer, index=True)
+    aa                 = Column(Integer, index=True)
     am                 = Column(Integer, index=True)
     specialization     = Column(String(length=255), index=True)
     year_of_import     = Column(String(length=255), index=True)
@@ -150,6 +150,7 @@ class Qualifications(Base):
 
     def updateRow(self, row):
         fields = [
+            "aa",
             "am",
             "file",
             "specialization",
