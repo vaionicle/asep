@@ -1,5 +1,5 @@
 
-from sqlalchemy import String, Column, Integer, ForeignKey, Float, select
+from sqlalchemy import String, Column, Integer, ForeignKey, Float, Boolean, select
 
 from .Base import Base
 from .connect import engine, session
@@ -11,6 +11,7 @@ class Hire(Base):
     id                  = Column(Integer, primary_key=True)
     am                  = Column(String(length=255))
     file                = Column(String(length=255))
+    hired               = Column(Boolean, default=False)
 
     school_year         = Column(String(length=255))
     round               = Column(String(length=255))

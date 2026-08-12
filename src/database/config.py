@@ -3,8 +3,13 @@
 CONNECTOR  = "mariadb+mariadbconnector"
 MYSQL_USER = "local"
 MYSQL_PASS = "local"
-MYSQL_IP   = "db"
-MYSQL_PORT = "3306"
+
+if True:
+    MYSQL_IP   = "db"
+    MYSQL_PORT = "3306"
+else:
+    MYSQL_IP   = "0.0.0.0"
+    MYSQL_PORT = "6033"
 MYSQL_DB   = "ekpedeutikoi"
 
 ECHO_QUERIES = False

@@ -6,9 +6,10 @@ openpyxl
 fastapi==0.95.1 
 uvicorn==0.22.0 
 
+psycopg2-binary
+
 #new
 SQLAlchemy>=2.0
-psycopg2==2.9.6    #linux/mac user use: psycopg2-binary==2.9.6
-mariadb
-
+alembic
 python-dotenv
+mariadb

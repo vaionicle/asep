@@ -400,3 +400,5 @@ FodyWeavers.xsd
 # tmp/
 
 .DS_Store
+
+venv/

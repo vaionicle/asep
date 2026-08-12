@@ -1,20 +1,34 @@
-def ekpedeutikos(row):
+from . import parse_int
+
+def ekpedeutikos(row, spec):
     try:
-        am = int(float(row[1].value))
+        am = parse_int(row[1].value)
     except:
         am = 0
 
+    last_name   = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    name        = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    father      = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+
+    try:
+        adt = str(parse_int(row[5].value))
+    except:
+        adt = row[5].value
+
+    adt = adt.replace(" ", "").replace("-", "")
+
     return {
-        "am": am,
-        "name": row[3].value,
-        "lastname": row[2].value,
-        "father": row[4].value,
-        "adt": row[5].value
+        "am"            : am,
+        "name"          : name,
+        "lastname"      : last_name,
+        "father"        : father,
+        "adt"           : adt if adt != "" else "N/A",
+        "specification" : spec,
     }
 
-def qualifications(row, fileName):
+def qualifications(row, fileName, spec):
     try:
-        am = int(float(row[1].value))
+        am = parse_int(row[1].value)
     except:
         am = 0
 
@@ -22,7 +36,7 @@ def qualifications(row, fileName):
         "file": fileName,
 
         "am": am,
-
+        "specification" : spec,
         "01.first_degree": row[6].value,
         "02.second_degree": row[7].value,
         "03.doctor_degree": row[8].value,
