@@ -69,7 +69,8 @@ db.restore:
 	${SQLITE_RUN} sh -c "sqlite3 /db/database.db < /db/dump.sql"
 
 convert:
-	/Applications/LibreOffice.app/Contents/MacOS/soffice --headless --convert-to xls *.xlsx
+	find . -type f -name "*.xlsx" -print -execdir /Applications/LibreOffice.app/Contents/MacOS/soffice --headless --convert-to xls "{}" \;
+	find . -type f -name "*.xlsx" -print -execdir rm -rf "{}" \;
 
 # PYTHON VENV
 venv.create:

@@ -103,6 +103,14 @@ Order By ee.adt;
 - [F Round / 14-03-24](https://www.minedu.gov.gr/news/57891-14-03-24-130-2023-2024)
 - [G Round / 16-04-24](https://www.minedu.gov.gr/news/58136-16-04-24-106-2023-2024)
 
+### 2025-26
+
+#### α φαση
+
+https://www.minedu.gov.gr/site/62574-04-09-25-proslipseis-18-566-ekpaideftikon-protovathmias-kai-defterovathmias-ekpaidefsis-stin-eidiki-agogi-kai-ekpaidefsi-kai-stin-geniki-ekpaidefsi-os-prosorinon-anapliroton-me-sxesi-ergasias-idiotikoy-dikaiou-orismenou-xronou-gia-to-didaktiko-etos-2025-2026
+
+
+
 ## Nomimopoihsh
 
 ### 2024
