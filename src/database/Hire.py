@@ -1,75 +1,114 @@
-
-from sqlalchemy import String, Column, Integer, ForeignKey, Float, Boolean, select
+from sqlalchemy import String, Column, Integer, Float, ForeignKey, select
 
 from .Base import Base
 from .connect import engine, session
 
 class Hire(Base):
-    __tablename__ = "school_hire"
+    __tablename__ = "hires"
 
-    # Every SQLAlchemy table should have a primary key named 'id'
-    id                  = Column(Integer, primary_key=True)
-    am                  = Column(String(length=255))
-    file                = Column(String(length=255))
-    hired               = Column(Boolean, default=False)
+    # --------------------------------------------------
+    # Primary key / relation
+    # --------------------------------------------------
 
-    school_year         = Column(String(length=255))
-    round               = Column(String(length=255))
+    id = Column(Integer, primary_key=True)
+    educator_id = Column(Integer, ForeignKey("educator.id"), nullable=False, index=True)
 
-    location            = Column(String(length=255))
-    state               = Column(String(length=255))
-    management_sector   = Column(String(length=255))
-    working_hours       = Column(String(length=255))
+    # --------------------------------------------------
+    # Import metadata
+    # --------------------------------------------------
 
-    aa                  = Column(String(length=255))
-    aa_row              = Column(String(length=255))
+    school_year = Column(String(length=255), index=True)
+    round = Column(String(length=255), index=True)
 
-    department          = Column(String(length=255))
-    specification       = Column(String(length=255))
+    # --------------------------------------------------
+    # Row information
+    # --------------------------------------------------
 
-    main_table_score    = Column(String(length=255))
-    main_table_order    = Column(String(length=255))
-    main_table_type     = Column(String(length=255))
-    main_table          = Column(String(length=255))
+    aa = Column(Integer)
+    aa_row = Column(Integer)
 
-    def createRow(row, am, file):
+    # --------------------------------------------------
+    # Educator classification
+    # --------------------------------------------------
+
+    department = Column(String(length=255), index=True)
+    specialization = Column(String(length=255), index=True)
+
+    # --------------------------------------------------
+    # Ranking table
+    # --------------------------------------------------
+
+    main_table_type = Column(String(length=255))
+    main_table = Column(String(length=255))
+    main_table_order = Column(Integer)
+    main_table_score = Column(Float)
+
+    # --------------------------------------------------
+    # Placement
+    # --------------------------------------------------
+
+    location = Column(String(length=255), index=True)
+    working_hours = Column(String(length=255))
+    management_sector = Column(String(length=255))
+    state = Column(String(length=255), index=True)
+
+    # --------------------------------------------------
+    # Factory
+    # --------------------------------------------------
+
+    @staticmethod
+    def createRow(row):
         hire = Hire()
-        hire.updateRow(row, am, file)
+        hire.updateRow(row)
 
         return hire
 
-    def updateRow(self, row, am, file):
-        self.am                  = am
-        self.file                = file
+    # --------------------------------------------------
+    # Update
+    # --------------------------------------------------
 
-        self.school_year         = row['school_year']
-        self.round               = row['round']
+    def updateRow(self, row):
+        fields = [
+            "educator_id",
+            "school_year",
+            "round",
+            "aa",
+            "aa_row",
+            "department",
+            "specialization",
+            "main_table_type",
+            "main_table",
+            "main_table_order",
+            "main_table_score",
+            "location",
+            "working_hours",
+            "management_sector",
+            "state",
+        ]
 
-        self.location            = row['location']
-        self.state               = row['state']
-        self.management_sector   = row['management_sector']
-        self.working_hours       = row['working_hours']
+        for field in fields:
+            if field in row:
+                setattr(self, field, row[field])
 
-        self.aa                  = row['a/a']
-        self.aa_row              = row['a/a_row']
+    # --------------------------------------------------
+    # Queries
+    # --------------------------------------------------
 
-        self.department          = row['department']
-        self.specification       = row['spec']
+    @staticmethod
+    def findByEducatorID(educator_id):
+        query = select(Hire).where(
+            Hire.educator_id == educator_id
+        )
 
-        self.main_table          = row['main_table']
-        self.main_table_score    = row['main_table_score']
-        self.main_table_order    = row['main_table_order']
-        self.main_table_type     = row['main_table_type']
+        return session.scalars(query).all()
 
-    def findByAmYearRoundAndSpec(am, year, round, spec):
-        select_hire = select(Hire) \
-            .where(Hire.am == am) \
-            .where(Hire.school_year == year) \
-            .where(Hire.round == round) \
-            .where(Hire.specification == spec)
+    @staticmethod
+    def findByEducatorIDYearAndRound(educator_id, school_year, round):
+        query = (
+            select(Hire)
+            .where(Hire.educator_id == educator_id)
+            .where(Hire.school_year == school_year)
+            .where(Hire.round == round)
+        )
 
-        hires = session.scalars(select_hire).all()
-
-        return hires
-
-Base.metadata.create_all(engine)
+        return session.scalars(query).all()

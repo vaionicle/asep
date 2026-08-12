@@ -1,4 +1,4 @@
-from sqlalchemy import String, Column, Integer, Float, Boolean, select
+from sqlalchemy import String, Column, Integer, Float, Boolean, select, Index
 
 from .Base import Base
 from .connect import engine, session
@@ -6,6 +6,14 @@ from .connect import engine, session
 
 class Qualifications(Base):
     __tablename__ = "qualifications"
+    
+    __table_args__ = (
+        Index(
+            "ix_hires_am_order_in_list",
+            "am",
+            "order_in_list"
+        ),
+    )
 
     # Primary key
     # Every SQLAlchemy table should have a primary key named 'id'
@@ -13,12 +21,14 @@ class Qualifications(Base):
     id = Column(Integer, primary_key=True)
 
     educator_id =  Column(Integer, index=True)
-    specialization = Column(String(length=255), index=True)
 
     # --------------------------------------------------
     # Metadata
     # --------------------------------------------------
 
+    order_in_list      = Column(Integer, index=True)
+    am                 = Column(Integer, index=True)
+    specialization     = Column(String(length=255), index=True)
     year_of_import     = Column(String(length=255), index=True)
     pinakas_katataksis = Column(String(length=255), index=True) #2EA 2GE
     file               = Column(String(length=255))
@@ -140,6 +150,7 @@ class Qualifications(Base):
 
     def updateRow(self, row):
         fields = [
+            "am",
             "file",
             "specialization",
             "educator_id",

@@ -28,7 +28,6 @@ class Educator(Base):
         return educator
 
     def updateRow(self, row):
-        self.am             = row['am']
         self.lastname       = row['lastName']      if not isinstance(row['lastName'], list)   else " ".join(row['lastName'])
         self.name           = row['name']          if not isinstance(row['name'], list)       else " ".join(row['name'])
         self.father         = row['father']        if not isinstance(row['father'], list)     else " ".join(row['father'])
@@ -39,7 +38,6 @@ class Educator(Base):
     def __repr__(self) -> str:
         return f"Educator(\
             id={self.id!r}, \
-            am={self.am!r}, \
             name={self.name!r}, \
             lastname={self.lastname!r}, \
             father={self.father!r}, \
@@ -116,7 +114,7 @@ class Educator(Base):
         except Exception as e:
             logger.error(e)
 
-        # return []
+        return []
 
     def findByNameAndSpecAll(lastName, name, father, spec):
         # user_cls = aliased(User, name="user_cls")

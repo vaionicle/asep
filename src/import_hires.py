@@ -21,6 +21,8 @@ ch.setLevel(logging.INFO)
 # add ch to logger
 logger.addHandler(ch)
 
+# python /opt/asep/src/import_qualifications.py "ΠΕ02" "anaplirotes/2GE_2026_PROSORINOI/1_ΚΑΤ_ΠΕ02 ΦΙΛΟΛΟΓΟΙ_ΓΕΝ (ΜΕ ΕΜΠ.)_ΒΠ.xls"
+
 if __name__ == "__main__":
     try:
         n = len(sys.argv)
@@ -53,31 +55,26 @@ if __name__ == "__main__":
 
             # logger.debug(row_ekpedeutikos)
 
-            am = row_qualifications['am']
             adt = row_ekpedeutikos['adt']
             
             lastName = " ".join(row_ekpedeutikos['lastName'])
             name = " ".join(row_ekpedeutikos['name'])
             father = " ".join(row_ekpedeutikos['father'])
 
-            msg.append(f"{spec:<5} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
+            msg.append(f"{adt:<15} {lastName:<25} {name:<25} {father:<25}")
 
             try:
                 action = ""
                 
                 if adt == "" or adt == "0":
-                    educatorList = Educator.findByFullName(
-                        lastName = row_ekpedeutikos['lastName'],
-                        name     = row_ekpedeutikos['name'],
-                        father   = row_ekpedeutikos['father'],
-                    )
-                else:
-                    educatorList = Educator.findByFullNameAndAdtAll(
-                        lastName = row_ekpedeutikos['lastName'],
-                        name     = row_ekpedeutikos['name'],
-                        father   = row_ekpedeutikos['father'],
-                        adt      = adt
-                    )
+                    raise "NO ADT"
+
+                educatorList = Educator.findByFullNameAndAdtAll(
+                    lastName = row_ekpedeutikos['lastName'],
+                    name     = row_ekpedeutikos['name'],
+                    father   = row_ekpedeutikos['father'],
+                    adt      = adt
+                )
 
                 if len(educatorList) == 0:                    
                     action = "CREATED [+]"
@@ -87,18 +84,20 @@ if __name__ == "__main__":
                     action = "UPDATED"
                     educatorList[0].updateRow(row_ekpedeutikos)
                     educator = educatorList[0]
+                
                 else:
                     logger.debug(len(educatorList))
                     action = "WTF"
+                    
+                    raise "WTF"
 
                 mydb.connect.session.add(educator)
                 mydb.connect.session.commit()
     
             except Exception as e:
-                logger.info(educatorList)
                 logger.error(e)
 
-            msg.append(f"EDU: {action:<15}")
+            msg.append(f"EDU: {action:<12}")
 
             try:
                 action = ""
@@ -122,7 +121,7 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error(e)
 
-            msg.append(f"QUAL: {action:<20}")
+            msg.append(f"QUAL: {action:<12}")
 
             msg = " ".join(msg)
             logger.info(f"{msg}")

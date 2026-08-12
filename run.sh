@@ -1,4 +1,4 @@
-# #!/bin/bash
+# # #!/bin/bash
 make import.qualifications SPEC="ΠΕ01" FILE="pinakes/2GE_2026_PROSORINOI/1_ΚΑΤ_ΠΕ01 ΘΕΟΛΟΓΟΙ_ΓΕΝ (ΜΕ ΕΜΠ.)_ΒΠ.xls";
 make import.qualifications SPEC="ΠΕ02" FILE="pinakes/2GE_2026_PROSORINOI/1_ΚΑΤ_ΠΕ02 ΦΙΛΟΛΟΓΟΙ_ΓΕΝ (ΜΕ ΕΜΠ.)_ΒΠ.xls";
 make import.qualifications SPEC="ΠΕ03" FILE="pinakes/2GE_2026_PROSORINOI/1_ΚΑΤ_ΠΕ03 ΜΑΘΗΜΑΤΙΚΟΙ_ΓΕΝ (ΜΕ ΕΜΠ.)_ΒΠ.xls";

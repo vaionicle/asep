@@ -26,6 +26,14 @@ Order By ee.adt;
 select * from educator;
 
 
+
+select q.specialization, e.*, q.*
+from educator as e 
+inner join qualifications as q
+where
+    e.id = q.educator_id
+    AND lastname = "ΚΑΡΑΚΩΣΤΑ" ;
+
 -- TRUNCATE TABLES
 truncate table educator;
 truncate table qualifications;

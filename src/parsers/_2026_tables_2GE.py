@@ -1,11 +1,6 @@
 from . import parse_int, parse_float
 
 def ekpedeutikos(row):
-    try:
-        am = parse_int(row[1].value)
-    except:
-        am = 0
-
     last_name   = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
     name        = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
     father      = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
@@ -18,7 +13,6 @@ def ekpedeutikos(row):
     adt = adt.replace(" ", "").replace("-", "")
 
     return {
-        "am"            : am,
         "name"          : name,
         "lastName"      : last_name,
         "father"        : father,
@@ -26,7 +20,13 @@ def ekpedeutikos(row):
     }
 
 def qualifications(row, fileName, spec):
+    try:
+        am = parse_int(row[1].value)
+    except:
+        am = 0
+
     return {
+        "am": am,
         "file": fileName,
         "year_of_import": 2026,
         "specialization": spec,
