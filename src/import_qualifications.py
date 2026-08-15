@@ -8,7 +8,14 @@ import database as mydb
 import logging
 from database.Educator import Educator
 from database.Qualifications import Qualifications
+from parsers import parse_int
+
 from sqlalchemy import select
+
+QUALIFICATION_TABLES = {
+    2023: qualification_tables_2023,
+    2026: qualification_tables_2026,
+}
 
 logger = logging.getLogger('qualifications')
 logger.setLevel(logging.INFO)
@@ -27,10 +34,10 @@ if __name__ == "__main__":
 
         spec = sys.argv[1]
         fileName = sys.argv[2]
-        year = "2026"
+        year = parse_int(sys.argv[3])
 
-        logger.debug(f"{year:<4} {spec:<7} {fileName}")
-        
+        logger.info(f"{year:<4} {spec:<7} {fileName}")
+
         book = xlrd.open_workbook(filename=f"/opt/asep/tmp/{fileName}")
 
         sh = book.sheet_by_index(0)
@@ -39,19 +46,19 @@ if __name__ == "__main__":
         logger.debug("The number of worksheets is {0}".format(book.nsheets))
         logger.debug("Worksheet name(s): {0}".format(book.sheet_names()))
 
-        init_row = 7
-        # init_row = sh.nrows - 100
-        end_row = sh.nrows-36
-        # end_row = 205
+        q = QUALIFICATION_TABLES.get(year)
+
+        init_row = getattr(q, 'init_row', 0)
+        end_row = sh.nrows - getattr(q, 'end_row', sh.nrows)
 
         for rx in range(init_row, end_row):
             msg = []
             row = sh.row(rx)
             
-            row_ekpedeutikos = qualification_tables_2026.ekpedeutikos(row)
-            row_qualifications = qualification_tables_2026.qualifications(row, fileName, spec)
+            row_ekpedeutikos = q.ekpedeutikos(row)
+            row_qualifications = q.qualifications(row, fileName, spec)
 
-            # logger.debug(row_ekpedeutikos)
+            logger.debug(row_ekpedeutikos)
 
             aa = row_qualifications['aa']
             am = row_qualifications['am']
@@ -61,11 +68,11 @@ if __name__ == "__main__":
             name = " ".join(row_ekpedeutikos['name'])
             father = " ".join(row_ekpedeutikos['father'])
 
-            msg.append(f"{spec:<5} {aa:<6} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
+            msg.append(f"{year:<4}-{spec:<5} {aa:<6} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
 
             try:
                 action = ""
-                
+
                 if adt == "" or adt == "0":
                     educatorList = Educator.findByFullName(
                         lastName = row_ekpedeutikos['lastName'],
@@ -104,7 +111,7 @@ if __name__ == "__main__":
             try:
                 action = ""
 
-                qualifications = Qualifications.findBy(spec, educator.id)
+                qualifications = Qualifications.findBy(spec, educator.id, am)
 
                 row_qualifications['educator_id'] = educator.id
                 row_qualifications['year_of_import'] = year

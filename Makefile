@@ -18,8 +18,8 @@ ssh:
 	${DOCKER_RUN} /bin/bash
 
 import.qualifications:
-	@echo "${SPEC}" "${FILE}"
-	${DOCKER_RUN} python /opt/asep/src/import_qualifications.py "${SPEC}" "${FILE}"
+	@echo "${YEAR}" "${SPEC}" "${FILE}"
+	${DOCKER_RUN} python /opt/asep/src/import_qualifications.py "${SPEC}" "${FILE}" "${YEAR}"
 
 import.positions:
 	@echo "${YEAR}" "${PHASE}" "${FILE}"

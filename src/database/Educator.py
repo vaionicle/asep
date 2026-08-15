@@ -165,12 +165,6 @@ class Educator(Base):
 
         educators = session.execute(select_join).all()
         
-        # print(educators)
-
-        # educators = session.scalars(select_join).all()
-
-        # educators = session.query(educator_cls, qualifications_cls).join(Address).all()
-
         return educators
 
     def findByFullNameAndAdtAll(lastName, name, father, adt):

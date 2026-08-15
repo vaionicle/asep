@@ -155,6 +155,7 @@ class Qualifications(Base):
             "file",
             "specialization",
             "educator_id",
+            "pinakas_katataksis",
             "year_of_import",
             "vasikos_titlos_spoudon",
             "deutero_ptyxio_aei",
@@ -215,12 +216,15 @@ class Qualifications(Base):
         return session.scalars(query).all()
 
 
-    def findBy(specialization, educator_id):
+    def findBy(specialization, educator_id, am):
         query = select(Qualifications).where(
             Qualifications.educator_id == educator_id
         )
         query = query.where(
             Qualifications.specialization == specialization
+        )
+        query = query.where(
+            Qualifications.am == am
         )
 
         return session.scalars(query).all()

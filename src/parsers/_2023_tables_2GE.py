@@ -1,14 +1,12 @@
-from . import parse_int
+from . import parse_int, parse_float
 
-def ekpedeutikos(row, spec):
-    try:
-        am = parse_int(row[1].value)
-    except:
-        am = 0
+init_row = 7
+end_row = 29
 
-    last_name   = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    name        = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    father      = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+def ekpedeutikos(row):
+    last_name = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    name      = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    father    = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
 
     try:
         adt = str(parse_int(row[5].value))
@@ -18,13 +16,12 @@ def ekpedeutikos(row, spec):
     adt = adt.replace(" ", "").replace("-", "")
 
     return {
-        "am"            : am,
-        "name"          : name,
-        "lastname"      : last_name,
-        "father"        : father,
-        "adt"           : adt if adt != "" else "N/A",
-        "specification" : spec,
+        "name": name.strip(),
+        "lastName": last_name.strip(),
+        "father": father.strip(),
+        "adt": adt if adt != "" else "N/A",
     }
+
 
 def qualifications(row, fileName, spec):
     try:
@@ -33,50 +30,153 @@ def qualifications(row, fileName, spec):
         am = 0
 
     return {
-        "file": fileName,
-
+        "aa": parse_int(row[0].value),
         "am": am,
-        "specification" : spec,
-        "01.first_degree": row[6].value,
-        "02.second_degree": row[7].value,
-        "03.doctor_degree": row[8].value,
-        "04.master_degree": row[9].value,
+        "file": fileName,
+        "year_of_import": 2023,
+        "specialization": spec,
+        "pinakas_katataksis": "2GE",
 
-        "05.perfect_knowledge_foreign_language": row[10].value,
-        "06.very_good_knowledge_foreign_language": row[11].value,
-        "07.good_knowledge_foreign_language": row[12].value,
-        "08.foreign_language_score": row[13].value,
+        # --------------------------------------------------
+        # Academic qualifications
+        # --------------------------------------------------
 
-        "09.computers": row[14].value,
-        "10.300_hours": row[15].value,
-        "11.total_score_of_academic": row[16].value,
-        "12.month_of_education_experience": row[17].value,
-        "13.score_of_education_experience": row[18].value,
+        # 1: Βασικός Τίτλος
+        "vasikos_titlos_spoudon": parse_float(row[6].value),
 
-        "14.number_of_months_hard_to_reach_schools": row[19].value,
-        "15.score_hard_to_reach_schools": row[20].value,
+        # 2: Δεύτερο Πτυχίο Α.Ε.Ι
+        "deutero_ptyxio_aei": parse_float(row[7].value),
 
-        "16.": row[21].value,
-        "17.": row[22].value,
-        "18.": row[23].value,
-        "19.": row[24].value,
-        "20.": row[25].value,
-        "21.": row[26].value,
-        "22.": row[27].value,
-        "23.": row[28].value,
+        # 3: Διδακτορικό Δίπλωμα
+        "didaktoriko_diploma": parse_float(row[8].value),
 
-        "24.working_experience": row[29].value,
-        "25.kids": row[30].value,
-        "26.amea": row[31].value,
-        "27.paidagogiki_eparkeia": row[32].value,
+        # 4: Μεταπτυχιακός Τίτλος Σπουδών
+        "monades_metaptyxiakon_titlon_synolika": parse_float(row[9].value),
 
-        "total_score": row[33].value,
+        # --------------------------------------------------
+        # Foreign languages
+        # --------------------------------------------------
+
+        # 5: Άριστη Γνώση Ξένης Γλώσσας
+        "aristi_gnosi_xenon_glosson": parse_float(row[10].value),
+
+        # 6: Πολύ Καλή Γνώση Ξένης Γλώσσας
+        "poly_kali_gnosi_xenon_glosson": parse_float(row[11].value),
+
+        # 7: Καλή Γνώση Ξένης Γλώσσας
+        "kali_gnosi_xenon_glosson": parse_float(row[12].value),
+
+        # 8: Συνολική Βαθμολογία Ξένων Γλωσσών
+        "synolo_monadon_xenon_glosson_eos_2": parse_float(row[13].value),
+
+        # --------------------------------------------------
+        # Computer skills
+        # --------------------------------------------------
+
+        # 9: Γνώση Χειρισμού Η/Υ
+        "gnosi_xeirismou_iy": parse_float(row[14].value),
+
+        # --------------------------------------------------
+        # Academic training
+        # --------------------------------------------------
+
+        # 10: Επιμόρφωση Διάρκειας 300 Ωρών
+        "epimorfosi_aei_toulaxiston_300_oron_7_minon": parse_float(row[15].value),
+
+        # 11: Συνολική Βαθμολογία Ακαδημαϊκών Προσόντων
+        "synolo_monadon_akadimaikon_prosonton": parse_float(row[16].value),
+
+        # --------------------------------------------------
+        # Teaching experience
+        # --------------------------------------------------
+
+        # 12: Αριθμός Μηνών Εκπαιδευτικής Προϋπηρεσίας
+        "mines_ekpaideutikis_proypiresias": parse_float(row[17].value),
+
+        # 13: Βαθμολογία Εκπαιδευτικής Προϋπηρεσίας
+        "monades_ekpaideutikis_proypiresias": parse_float(row[18].value),
+
+        # 14: Αριθμός Μηνών σε Δυσπρόσιτες Σχολικές Μονάδες
+        "mines_ekpaideutikis_proypiresias_se_dysprosita": parse_float(row[19].value),
+
+        # 15: Βαθμολογία Μηνών σε Δυσπρόσιτες Σχολικές Μονάδες
+        "monades_ekpaideutikis_proypiresias_se_dysprosita": parse_float(row[20].value),
+
+        # --------------------------------------------------
+        # 3-month contracts 2020-2021
+        # --------------------------------------------------
+
+        # 16
+        "mines_ekp_proyp_3minis_diarkeias_2020_2021": parse_float(row[21].value),
+
+        # 17
+        "monades_ekp_proyp_3minis_diarkeias_2020_2021": parse_float(row[22].value),
+
+        # --------------------------------------------------
+        # 3-month contracts 2021-2022
+        # --------------------------------------------------
+
+        # 18
+        "mines_ekp_proyp_3minis_diarkeias_2021_2022": parse_float(row[23].value),
+
+        # 19
+        "monades_ekp_proyp_3minis_diarkeias_2021_2022": parse_float(row[24].value),
+
+        # --------------------------------------------------
+        # 3-month hard-to-reach 2020-2021
+        # --------------------------------------------------
+
+        # 20
+        "mines_ekp_proyp_3minis_diarkeias_dysprosita_2020_2021": parse_float(row[25].value),
+
+        # 21
+        "monades_ekp_proyp_3minis_diarkeias_dysprosita_2020_2021": parse_float(row[26].value),
+
+        # --------------------------------------------------
+        # 3-month hard-to-reach 2021-2022
+        # --------------------------------------------------
+
+        # 22
+        "mines_ekp_proyp_3minis_diarkeias_dysprosita_2021_2022": parse_float(row[27].value),
+
+        # 23
+        "monades_ekp_proyp_3minis_diarkeias_dysprosita_2021_2022": parse_float(row[28].value),
+
+        # --------------------------------------------------
+        # Total teaching experience
+        # --------------------------------------------------
+
+        # 24: Συνολική Βαθμολογία Εκπαιδευτικής Προϋπηρεσίας
+        "synolo_monadon_ekpaideutikis_proypiresias": parse_float(row[29].value),
+
+        # --------------------------------------------------
+        # Children
+        # --------------------------------------------------
+
+        # 25: Βαθμολογία Ανήλικων Τέκνων
+        "monades_teknon": parse_float(row[30].value),
+
+        # --------------------------------------------------
+        # Disability
+        # --------------------------------------------------
+
+        # 26: Βαθμολογία Ποσοστού Αναπηρίας
+        "monades_anapirias": parse_float(row[31].value),
+
+        # --------------------------------------------------
+        # Pedagogical qualification
+        # --------------------------------------------------
+
+        # 27: Παιδαγωγική Επάρκεια
+        "protaksi_logo_paidagogikis_didaktikis_eparkeias": True if str(row[32].value).strip().upper() == "ΝΑΙ" else False,
+
+        # --------------------------------------------------
+        # Final score
+        # --------------------------------------------------
+
+        "total_score": parse_float(row[33].value),
     }
 
-# def import2023_temporary_tables():
-    
-
-# [number:1.0, number:6224.0, text:'ΓΚΟΡΟΥ', text:'ΣΟΦΙΑ', text:'ΙΩΑΝΝΗΣ', text:'ΑΜ603570', number:18.33, number:0.0, number:40.0, number:20.0, number:14.0, empty:'', empty:'', number:14.0, number:4.0, number:2.0, number:98.33, number:120.0, number:120.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:0.0, number:120.0, number:6.0, number:0.0, text:'ΝΑΙ', number:224.33]
 # 1:Βασικός Τίτλος
 # 2:Δεύτερο Πτυχίο Α.Ε.Ι
 # 3:Διδακτορικό Δίπλωμα
@@ -112,4 +212,3 @@ def qualifications(row, fileName, spec):
 # 25:Βαθμολογία Ανήλικων Τέκνων
 # 26:Βαθμολογία Ποσοστού Αναπηρίας
 # 27:Παιδαγωγική Επάρκεια
-

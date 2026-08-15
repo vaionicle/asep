@@ -1,9 +1,12 @@
 from . import parse_int, parse_float
 
+init_row = 7
+end_row = 36
+
 def ekpedeutikos(row):
-    last_name   = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    name        = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    father      = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    last_name   = row[2].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    name        = row[3].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    father      = row[4].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
 
     try:
         adt = str(parse_int(row[5].value))
@@ -31,6 +34,7 @@ def qualifications(row, fileName, spec):
         "file": fileName,
         "year_of_import": 2026,
         "specialization": spec,
+        "pinakas_katataksis": "2GE",
 
         # Academic qualifications
         "vasikos_titlos_spoudon": parse_float(row[6].value),
@@ -95,7 +99,7 @@ def qualifications(row, fileName, spec):
         "monades_anapirias": parse_float(row[38].value),
 
         # Special qualifications
-        "protaksi_logo_paidagogikis_didaktikis_eparkeias": True if row[39].value == "NAI" else False,
+        "protaksi_logo_paidagogikis_didaktikis_eparkeias": True if row[39].value == "ΝΑΙ" else False,
 
         # Ranking / lottery
         "seira_ilektronikis_klirosis_par_4_arthr_15_n_4765_2021": row[40].value,
