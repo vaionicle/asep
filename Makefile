@@ -2,7 +2,7 @@ IMAGE_NAME := asep_python_311:latest
 SQLITE_IMAGE := keinos/sqlite3
 DATETIME := $(`date -j '+%Y%m%d%H%M'`)
 
-DOCKER_RUN := docker run -it --rm \
+DOCKER_RUN := docker run -i --rm \
 	--network asep_backend \
 	-v ${PWD}/:/opt/asep \
 	-w "/opt/asep" \
@@ -15,7 +15,7 @@ build:
 		-t ${IMAGE_NAME} .
 
 ssh:
-	${DOCKER_RUN} /bin/bash
+	${DOCKER_RUN} -t /bin/bash
 
 import.qualifications:
 	@echo "${YEAR}" "${SPEC}" "${FILE}"

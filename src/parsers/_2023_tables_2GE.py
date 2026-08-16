@@ -4,9 +4,9 @@ init_row = 7
 end_row = 29
 
 def ekpedeutikos(row):
-    last_name = row[2].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    name      = row[3].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
-    father    = row[4].value.replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    last_name = row[2].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    name      = row[3].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
+    father    = row[4].value.strip().replace(" ", "-").replace("---", "-").replace("--", "-").split("-")
 
     try:
         adt = str(parse_int(row[5].value))
@@ -16,9 +16,9 @@ def ekpedeutikos(row):
     adt = adt.replace(" ", "").replace("-", "")
 
     return {
-        "name": name.strip(),
-        "lastName": last_name.strip(),
-        "father": father.strip(),
+        "name": name,
+        "lastName": last_name,
+        "father": father,
         "adt": adt if adt != "" else "N/A",
     }
 
