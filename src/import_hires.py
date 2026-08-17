@@ -2,15 +2,21 @@
 
 import xlrd
 import sys
-import parsers._2023_tables_2GE as qualification_tables_2023
-import parsers._2026_tables_2GE as qualification_tables_2026
+import parsers._2023_hires as hire_tables_2023
+import parsers._2025_hires as hire_tables_2025
 import database as mydb
 import logging
 from database.Educator import Educator
 from database.Qualifications import Qualifications
-from sqlalchemy import select
+from database.Hire import Hire
+from parsers import parse_int
 
-logger = logging.getLogger('qualifications')
+HIRE_TABLES = {
+    2023: hire_tables_2023,
+    2025: hire_tables_2025,
+}
+
+logger = logging.getLogger('hires')
 logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
 
@@ -21,18 +27,18 @@ ch.setLevel(logging.INFO)
 # add ch to logger
 logger.addHandler(ch)
 
-# python /opt/asep/src/import_qualifications.py "ΠΕ02" "anaplirotes/2GE_2026_PROSORINOI/1_ΚΑΤ_ΠΕ02 ΦΙΛΟΛΟΓΟΙ_ΓΕΝ (ΜΕ ΕΜΠ.)_ΒΠ.xls"
+# python /opt/asep/src/import_hires.py 2025 2026 "2025-26" "A" "anaplirotes/2025-26/a_fasi/Προσλήψεις_ΓΕΝΙΚΗ_ΠΕ_20250904_int.xls"
 
 if __name__ == "__main__":
     try:
-        n = len(sys.argv)
+        year = parse_int(sys.argv[1])                  # hire file layout: 2023 or 2025
+        qualifications_year = parse_int(sys.argv[2])    # qualifications cohort to match against: 2023 or 2026
+        school_year = sys.argv[3]
+        round = sys.argv[4]
+        fileName = sys.argv[5]
 
-        spec = sys.argv[1]
-        fileName = sys.argv[2]
-        year = "2026"
+        logger.info(f"{school_year:<8} {round:<2} quals={qualifications_year:<4} {fileName}")
 
-        logger.debug(f"{year:<4} {spec:<7} {fileName}")
-        
         book = xlrd.open_workbook(filename=f"/opt/asep/tmp/{fileName}")
 
         sh = book.sheet_by_index(0)
@@ -41,87 +47,112 @@ if __name__ == "__main__":
         logger.debug("The number of worksheets is {0}".format(book.nsheets))
         logger.debug("Worksheet name(s): {0}".format(book.sheet_names()))
 
-        init_row = 7
-        # init_row = sh.nrows - 100
-        end_row = sh.nrows-36
-        # end_row = 205
+        h = HIRE_TABLES.get(year)
+
+        init_row = getattr(h, 'init_row', 0)
+        end_row = sh.nrows - getattr(h, 'end_row', sh.nrows)
 
         for rx in range(init_row, end_row):
             msg = []
             row = sh.row(rx)
-            
-            row_ekpedeutikos = qualification_tables_2026.ekpedeutikos(row)
-            row_qualifications = qualification_tables_2026.qualifications(row, fileName, spec)
 
-            # logger.debug(row_ekpedeutikos)
+            row_hire = h.hire(row, school_year=school_year, round=round)
 
-            adt = row_ekpedeutikos['adt']
-            
-            lastName = " ".join(row_ekpedeutikos['lastName'])
-            name = " ".join(row_ekpedeutikos['name'])
-            father = " ".join(row_ekpedeutikos['father'])
+            logger.debug(row_hire)
 
-            msg.append(f"{adt:<15} {lastName:<25} {name:<25} {father:<25}")
+            lastName = row_hire['lastname']
+            name = row_hire['name']
+            father = row_hire['father']
+            spec = row_hire['specialization']
+            aa_row = row_hire['aa_row']
+
+            lastNameStr = " ".join(lastName) if isinstance(lastName, list) else lastName
+            nameStr = " ".join(name) if isinstance(name, list) else name
+            fatherStr = " ".join(father) if isinstance(father, list) else father
+
+            msg.append(f"{spec:<10} {lastNameStr:<25} {nameStr:<25} {fatherStr:<25}")
 
             try:
                 action = ""
-                
-                if adt == "" or adt == "0":
-                    raise "NO ADT"
+                educator = None
 
-                educatorList = Educator.findByFullNameAndAdtAll(
-                    lastName = row_ekpedeutikos['lastName'],
-                    name     = row_ekpedeutikos['name'],
-                    father   = row_ekpedeutikos['father'],
-                    adt      = adt
+                # 1. Primary match: the hire row's position in the hiring
+                #    "flow" (aa_row) is the same position ("aa") the
+                #    person had in that year's qualifications ranking
+                #    table, for the same specialization.
+                qualifications = Qualifications.findByYearSpecAndAa(
+                    year_of_import = qualifications_year,
+                    specialization = spec,
+                    aa             = aa_row,
                 )
 
-                if len(educatorList) == 0:                    
-                    action = "CREATED [+]"
-                    educator = Educator.createRow(row_ekpedeutikos)
+                if len(qualifications) == 1:
+                    action = "MATCHED (aa)"
+                    educator = mydb.connect.session.get(Educator, qualifications[0].educator_id)
 
-                elif len(educatorList) == 1:
-                    action = "UPDATED"
-                    educatorList[0].updateRow(row_ekpedeutikos)
-                    educator = educatorList[0]
-                
-                else:
-                    logger.debug(len(educatorList))
-                    action = "WTF"
-                    
-                    raise "WTF"
+                # 2. Fallback: rankings can shift between the
+                #    qualifications list and a later hiring phase, so if
+                #    the aa position didn't resolve to exactly one
+                #    qualification, fall back to a name + spec match.
+                #    Never skip the row: if that's still ambiguous or
+                #    empty, create a new educator rather than guessing.
+                if educator is None:
+                    educatorList = Educator.findByFullNameAndSpec(
+                        lastName = lastName,
+                        name     = name,
+                        father   = father,
+                        spec     = spec,
+                    )
+
+                    if len(educatorList) == 1:
+                        action = "MATCHED (name+spec)"
+                        educator = educatorList[0]
+                    else:
+                        if len(educatorList) > 1:
+                            action = "CREATED [+] (ambiguous match)"
+                            logger.warning(
+                                f"Ambiguous educator match {lastNameStr}/{nameStr}/{fatherStr} "
+                                f"spec={spec}: candidates={[e.id for e in educatorList]}"
+                            )
+                        else:
+                            action = "CREATED [+]"
+
+                        educator = Educator.createRow({
+                            "lastName": lastName,
+                            "name": name,
+                            "father": father,
+                            "adt": "",
+                        })
 
                 mydb.connect.session.add(educator)
                 mydb.connect.session.commit()
-    
+
             except Exception as e:
                 logger.error(e)
+                continue
 
-            msg.append(f"EDU: {action:<12}")
+            msg.append(f"EDU: {action:<24}")
 
             try:
                 action = ""
 
-                qualifications = Qualifications.findBy(spec, educator.id)
+                row_hire['educator_id'] = educator.id
 
-                row_qualifications['educator_id'] = educator.id
-                row_qualifications['year_of_import'] = year
-                row_qualifications['file'] = fileName
-                row_qualifications['specialization'] = spec
+                hires = Hire.findByEducatorIDYearAndRound(educator.id, school_year, round)
 
-                if len(qualifications) == 0:
+                if len(hires) == 0:
                     action = "CREATED [+]"
-                    qualification = Qualifications.createRow(row_qualifications)
-                    mydb.connect.session.add(qualification)
+                    hire = Hire.createRow(row_hire)
+                    mydb.connect.session.add(hire)
                 else:
                     action = "UPDATED"
-                    qualifications[0].updateRow(row_qualifications)
-                    mydb.connect.session.add(qualifications[0])
+                    hires[0].updateRow(row_hire)
+                    mydb.connect.session.add(hires[0])
 
             except Exception as e:
                 logger.error(e)
 
-            msg.append(f"QUAL: {action:<12}")
+            msg.append(f"HIRE: {action:<12}")
 
             msg = " ".join(msg)
             logger.info(f"{msg}")
@@ -130,6 +161,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         mydb.connect.session.commit()
 
-        logger.info("STOPPED") 
-
-
+        logger.info("STOPPED")

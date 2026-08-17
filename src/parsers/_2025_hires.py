@@ -1,5 +1,8 @@
 from . import parse_int, parse_float
 
+init_row = 1
+end_row = 0
+
 
 def cleanup(text):
     if text is None:

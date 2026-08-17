@@ -11,7 +11,7 @@ class Hire(Base):
     # --------------------------------------------------
 
     id = Column(Integer, primary_key=True)
-    educator_id = Column(Integer, ForeignKey("educator.id"), nullable=False, index=True)
+    educator_id = Column(Integer, nullable=False, index=True)
 
     # --------------------------------------------------
     # Import metadata
