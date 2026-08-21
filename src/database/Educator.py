@@ -1,3 +1,5 @@
+import re
+
 from sqlalchemy import String, Column, Integer, ForeignKey, select, Boolean
 from sqlalchemy.orm import aliased
 
@@ -7,6 +9,16 @@ from .Qualifications import Qualifications
 
 import logging
 logger = logging.getLogger('qualifications')
+
+# Current-format ADT: one Greek letter followed by 8 digits (eg. Α00576786).
+# Older files use two letters followed by 6 digits (eg. ΑΙ519314); those are
+# never mistaken for the current format, so a new ADT only ever replaces an
+# old one, never the other way round.
+NEW_ADT_PATTERN = re.compile(r"^[Α-Ω]\d{8}$")
+
+
+def _is_new_format_adt(adt):
+    return bool(adt) and bool(NEW_ADT_PATTERN.match(adt))
 
 
 class Educator(Base):
@@ -18,6 +30,7 @@ class Educator(Base):
     lastname        = Column(String(length=255), index=True)
     father          = Column(String(length=255), index=True)
     adt             = Column(String(length=255), index=True)
+    previous_adt    = Column(String(length=255), index=True)
     penalty         = Column(Boolean, default=False)
     hired           = Column(Boolean, default=False)
 
@@ -31,7 +44,25 @@ class Educator(Base):
         self.lastname       = row['lastName']      if not isinstance(row['lastName'], list)   else " ".join(row['lastName'])
         self.name           = row['name']          if not isinstance(row['name'], list)       else " ".join(row['name'])
         self.father         = row['father']        if not isinstance(row['father'], list)     else " ".join(row['father'])
-        self.adt            = row['adt']
+
+        incoming_adt = row['adt']
+
+        if incoming_adt not in ("", "0", None):
+            if self.adt in ("", "0", None):
+                self.adt = incoming_adt
+            elif incoming_adt != self.adt:
+                # The ADT changed for this person (eg. the old
+                # ΑΙ519314-style adt being replaced by the new
+                # Α00576786-style one). Keep both instead of losing the
+                # old one: promote the incoming value only if it's the
+                # current format (or self.adt isn't), otherwise just
+                # remember it as a historical alias.
+                if _is_new_format_adt(incoming_adt) or not _is_new_format_adt(self.adt):
+                    self.previous_adt = self.adt
+                    self.adt = incoming_adt
+                else:
+                    self.previous_adt = incoming_adt
+
         self.penalty        = False
         self.hired          = False
 
@@ -55,10 +86,92 @@ class Educator(Base):
     def findByAdt(adt):
         select_educator = select(Educator)
         select_educator = select_educator.where(Educator.adt == adt)
+        select_educator = select_educator.order_by(Educator.id)
 
         educators = session.scalars(select_educator).all()
 
         return educators
+
+    def findByAnyAdt(adt):
+        # Matches on either the current adt or a previously-seen one, so
+        # re-importing an older file (with an older-format adt) still
+        # finds the same educator instead of creating a duplicate.
+        select_educator = select(Educator)
+        select_educator = select_educator.where(
+            (Educator.adt == adt) | (Educator.previous_adt == adt)
+        )
+        select_educator = select_educator.order_by(Educator.id)
+
+        educators = session.scalars(select_educator).all()
+
+        return educators
+
+    def findByFullNameAndSpec(lastName, name, father, spec):
+        # Unlike findByNameAndSpecAll (which joins on the non-existent
+        # Educator.am), this joins Qualifications back to Educator via
+        # educator_id, which is the actual foreign key.
+        educator_cls = aliased(Educator, name="e")
+        qualifications_cls = aliased(Qualifications, name="q")
+
+        select_join = select(educator_cls).distinct()
+        select_join = select_join.join_from(
+            educator_cls,
+            qualifications_cls,
+            qualifications_cls.educator_id == educator_cls.id,
+        )
+        select_join = select_join.where(qualifications_cls.specialization == spec)
+
+        # LASTNAME
+        if isinstance(lastName, list) and len(lastName) == 1:
+            select_join = select_join.where(
+                (educator_cls.lastname.like(f"{lastName[0]}%"))
+            )
+        elif isinstance(lastName, list) and len(lastName) >= 2:
+            select_join = select_join.where(
+                (educator_cls.lastname.like(f"{lastName[0]}%")) |
+                (educator_cls.lastname.like(f"{lastName[1]}%"))
+            )
+        else:
+            select_join = select_join \
+                .where(educator_cls.lastname.like(f"{lastName}%"))
+
+        # NAME
+        if isinstance(name, list) and len(name) == 1:
+            select_join = select_join.where(
+                (educator_cls.name.like(f"{name[0][0:4]}%"))
+            )
+        elif isinstance(name, list) and len(name) >= 2:
+            select_join = select_join.where(
+                (educator_cls.name.like(f"{name[0][0:4]}%")) |
+                (educator_cls.name.like(f"{name[1][0:4]}%"))
+            )
+        else:
+            select_join = select_join \
+                .where(educator_cls.name.like(f"{name[0:3]}%"))
+
+        # FATHER
+        if isinstance(father, list) and len(father) == 1:
+            select_join = select_join.where(
+                (educator_cls.father.like(f"{father[0][0:4]}%"))
+            )
+        elif isinstance(father, list) and len(father) >= 2:
+            select_join = select_join.where(
+                (educator_cls.father.like(f"{father[0][0:4]}%")) |
+                (educator_cls.father.like(f"{father[1][0:4]}%"))
+            )
+        else:
+            select_join = select_join \
+                .where(educator_cls.father.like(f"{father[0:4]}%"))
+
+        select_join = select_join.order_by(educator_cls.id)
+
+        try:
+            educators = session.scalars(select_join).all()
+            return educators
+        except Exception as e:
+            logger.error(e)
+
+        return []
 
 
     def findByFullName(lastName, name, father):

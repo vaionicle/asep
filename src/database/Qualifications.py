@@ -216,6 +216,20 @@ class Qualifications(Base):
         return session.scalars(query).all()
 
 
+    @staticmethod
+    def findByYearSpecAndAa(year_of_import, specialization, aa):
+        query = select(Qualifications).where(
+            Qualifications.year_of_import == year_of_import
+        )
+        query = query.where(
+            Qualifications.specialization == specialization
+        )
+        query = query.where(
+            Qualifications.aa == aa
+        )
+
+        return session.scalars(query).all()
+
     def findBy(specialization, educator_id, am):
         query = select(Qualifications).where(
             Qualifications.educator_id == educator_id

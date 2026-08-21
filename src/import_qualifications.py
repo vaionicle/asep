@@ -72,39 +72,67 @@ if __name__ == "__main__":
 
             try:
                 action = ""
+                educator = None
 
-                if adt == "" or adt == "0":
+                # ADT (govID) is unique per educator and is normally
+                # authoritative. Spec must NOT be part of this match: an
+                # educator can hold several specializations, so filtering
+                # by spec would miss them the first time we import a spec
+                # they don't have a Qualifications row for yet, creating
+                # a duplicate Educator instead of reusing the existing
+                # one.
+                if adt not in ("", "0"):
+                    educatorList = Educator.findByAnyAdt(adt)
+
+                    if len(educatorList) == 0:
+                        # Not found under the current or a previously-seen
+                        # adt. Could be a genuinely new educator, or an
+                        # existing one whose adt format just changed (eg.
+                        # ΑΙ519314 -> Α00576786) and we haven't recorded it
+                        # for them yet - fall back to a name match so we
+                        # update the existing person (and record both
+                        # adts via updateRow) instead of duplicating them.
+                        educatorList = Educator.findByFullName(
+                            lastName = row_ekpedeutikos['lastName'],
+                            name     = row_ekpedeutikos['name'],
+                            father   = row_ekpedeutikos['father'],
+                        )
+                else:
                     educatorList = Educator.findByFullName(
                         lastName = row_ekpedeutikos['lastName'],
                         name     = row_ekpedeutikos['name'],
                         father   = row_ekpedeutikos['father'],
                     )
-                else:
-                    educatorList = Educator.findByFullNameAndAdtAll(
-                        lastName = row_ekpedeutikos['lastName'],
-                        name     = row_ekpedeutikos['name'],
-                        father   = row_ekpedeutikos['father'],
-                        adt      = adt
-                    )
 
-                if len(educatorList) == 0:                    
-                    action = "CREATED [+]"
-                    educator = Educator.createRow(row_ekpedeutikos)
-
-                elif len(educatorList) == 1:
+                if len(educatorList) == 1:
                     action = "UPDATED"
                     educatorList[0].updateRow(row_ekpedeutikos)
                     educator = educatorList[0]
                 else:
-                    logger.debug(len(educatorList))
-                    action = "WTF"
+                    # 0 matches -> genuinely new educator.
+                    # >1 matches -> can't tell which one is "the" match;
+                    # never guess and overwrite an unrelated existing
+                    # record, so create a new row and flag it for a human
+                    # to reconcile instead of silently merging or dropping
+                    # the incoming data.
+                    if len(educatorList) > 1:
+                        action = "CREATED [+] (ambiguous match)"
+                        logger.warning(
+                            f"Ambiguous educator match adt={adt!r} "
+                            f"{lastName}/{name}/{father} spec={spec}: "
+                            f"candidates={[e.id for e in educatorList]}"
+                        )
+                    else:
+                        action = "CREATED [+]"
+
+                    educator = Educator.createRow(row_ekpedeutikos)
 
                 mydb.connect.session.add(educator)
                 mydb.connect.session.commit()
-    
+
             except Exception as e:
-                logger.info(educatorList)
                 logger.error(e)
+                continue
 
             msg.append(f"EDU: {action:<11}")
 
