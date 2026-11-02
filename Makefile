@@ -21,12 +21,18 @@ import.qualifications:
 	@echo "${YEAR}" "${SPEC}" "${FILE}"
 	${DOCKER_RUN} python /opt/asep/src/import_qualifications.py "${SPEC}" "${FILE}" "${YEAR}"
 
-import.positions:
-	@echo "${YEAR}" "${PHASE}" "${FILE}"
-	${DOCKER_RUN} python /opt/asep/src/import_anaplirotes.py "${YEAR}" "${PHASE}" "${FILE}"
+import.hires:
+	@echo "${LAYOUT}" "${SCHOOL_YEAR}" "${ROUND}" "${FILE}"
+	${DOCKER_RUN} python /opt/asep/src/import_hires.py "${LAYOUT}" "${SCHOOL_YEAR}" "${ROUND}" "${FILE}"
 
 run.qualifications.sh:
 	./scripts/2ge_2026.sh
+
+import.all:
+	./run.sh
+
+test:
+	${DOCKER_RUN} python -m unittest discover -s tests
 
 # run.anaplirotes.2023-24:
 # ${DOCKER_RUN} python /opt/asep/src/import_anaplirotes.py "2023-24" "A" "anaplirotes/2023-24/a_fasi/Προσλήψεις_Γενικής_ΔΕ_20230901_int.xls"
@@ -59,7 +65,7 @@ db.update: \
 	db.run
 
 db.cleanup: db.stop
-	docker container rm db pma
+	docker container rm mongo
 	docker volume rm asep_dbdata
 
 db.dump:
@@ -80,23 +86,3 @@ venv.pip:
 	source "${PWD}/venv/bin/activate" && \
 	pip install --upgrade pip && \
 	pip install -r requirements.txt
-
-
-# ALEMBIC - START
-migrate: alembic.migrate
-alembic.init:
-	${DOCKER_RUN} alembic init alembic
-
-alembic.initial_migration:
-	${DOCKER_RUN} alembic revision --autogenerate -m "Initial migration"
-
-alembic.migrate:
-	${DOCKER_RUN} alembic upgrade head
-
-alembic.downgrade:
-	${DOCKER_RUN} alembic upgrade head
-
-alembic.create_migration:
-	${DOCKER_RUN} alembic revision --autogenerate -m "${message}"
-
-# ALEMBIC - STOP
