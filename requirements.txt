@@ -9,7 +9,8 @@ uvicorn==0.22.0
 psycopg2-binary
 
 #new
-SQLAlchemy>=2.0
-alembic
+pymongo
 python-dotenv
-mariadb
+
+#tests
+mongomock

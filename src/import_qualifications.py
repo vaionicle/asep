@@ -4,13 +4,9 @@ import xlrd
 import sys
 import parsers._2023_tables_2GE as qualification_tables_2023
 import parsers._2026_tables_2GE as qualification_tables_2026
-import database as mydb
+import store
 import logging
-from database.Educator import Educator
-from database.Qualifications import Qualifications
 from parsers import parse_int
-
-from sqlalchemy import select
 
 QUALIFICATION_TABLES = {
     2023: qualification_tables_2023,
@@ -47,6 +43,7 @@ if __name__ == "__main__":
         logger.debug("Worksheet name(s): {0}".format(book.sheet_names()))
 
         q = QUALIFICATION_TABLES.get(year)
+        teachers = store.get_teachers()
 
         init_row = getattr(q, 'init_row', 0)
         end_row = sh.nrows - getattr(q, 'end_row', sh.nrows)
@@ -70,103 +67,27 @@ if __name__ == "__main__":
 
             msg.append(f"{year:<4}-{spec:<5} {aa:<6} {am:<10} {adt:<15} {lastName:<30} {name:<30} {father:<25}")
 
+            row_qualifications['year_of_import'] = year
+            row_qualifications['file'] = fileName
+            row_qualifications['specialization'] = spec
+
             try:
-                action = ""
-                educator = None
-
-                # ADT (govID) is unique per educator and is normally
-                # authoritative. Spec must NOT be part of this match: an
-                # educator can hold several specializations, so filtering
-                # by spec would miss them the first time we import a spec
-                # they don't have a Qualifications row for yet, creating
-                # a duplicate Educator instead of reusing the existing
-                # one.
-                if adt not in ("", "0"):
-                    educatorList = Educator.findByAnyAdt(adt)
-
-                    if len(educatorList) == 0:
-                        # Not found under the current or a previously-seen
-                        # adt. Could be a genuinely new educator, or an
-                        # existing one whose adt format just changed (eg.
-                        # ΑΙ519314 -> Α00576786) and we haven't recorded it
-                        # for them yet - fall back to a name match so we
-                        # update the existing person (and record both
-                        # adts via updateRow) instead of duplicating them.
-                        educatorList = Educator.findByFullName(
-                            lastName = row_ekpedeutikos['lastName'],
-                            name     = row_ekpedeutikos['name'],
-                            father   = row_ekpedeutikos['father'],
-                        )
-                else:
-                    educatorList = Educator.findByFullName(
-                        lastName = row_ekpedeutikos['lastName'],
-                        name     = row_ekpedeutikos['name'],
-                        father   = row_ekpedeutikos['father'],
-                    )
-
-                if len(educatorList) == 1:
-                    action = "UPDATED"
-                    educatorList[0].updateRow(row_ekpedeutikos)
-                    educator = educatorList[0]
-                else:
-                    # 0 matches -> genuinely new educator.
-                    # >1 matches -> can't tell which one is "the" match;
-                    # never guess and overwrite an unrelated existing
-                    # record, so create a new row and flag it for a human
-                    # to reconcile instead of silently merging or dropping
-                    # the incoming data.
-                    if len(educatorList) > 1:
-                        action = "CREATED [+] (ambiguous match)"
-                        logger.warning(
-                            f"Ambiguous educator match adt={adt!r} "
-                            f"{lastName}/{name}/{father} spec={spec}: "
-                            f"candidates={[e.id for e in educatorList]}"
-                        )
-                    else:
-                        action = "CREATED [+]"
-
-                    educator = Educator.createRow(row_ekpedeutikos)
-
-                mydb.connect.session.add(educator)
-                mydb.connect.session.commit()
-
+                _, action = store.save_ranking(teachers, {
+                    "lastname": row_ekpedeutikos['lastName'],
+                    "name":     row_ekpedeutikos['name'],
+                    "father":   row_ekpedeutikos['father'],
+                    "adt":      adt,
+                }, row_qualifications)
             except Exception as e:
                 logger.error(e)
                 continue
 
-            msg.append(f"EDU: {action:<11}")
-
-            try:
-                action = ""
-
-                qualifications = Qualifications.findBy(spec, educator.id, am)
-
-                row_qualifications['educator_id'] = educator.id
-                row_qualifications['year_of_import'] = year
-                row_qualifications['file'] = fileName
-                row_qualifications['specialization'] = spec
-
-                if len(qualifications) == 0:
-                    action = "CREATED [+]"
-                    qualification = Qualifications.createRow(row_qualifications)
-                    mydb.connect.session.add(qualification)
-                else:
-                    action = "UPDATED"
-                    qualifications[0].updateRow(row_qualifications)
-                    mydb.connect.session.add(qualifications[0])
-
-            except Exception as e:
-                logger.error(e)
-
-            msg.append(f"QUAL: {action:<20}")
+            msg.append(f"TEACHER: {action:<20}")
 
             msg = " ".join(msg)
             logger.info(f"{msg}")
 
-            mydb.connect.session.commit()
     except KeyboardInterrupt:
-        mydb.connect.session.commit()
-
         logger.info("STOPPED") 
 
 
